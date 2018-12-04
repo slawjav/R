@@ -1,0 +1,340 @@
+
+
+df <- data.frame(id = 1:3, 
+                 name=c("Czesio", "Basia","Zuzia"),
+                 age=c(17, 22, 33),
+                 gender=factor(c("male", "female", "female")),
+                 stringsAsFactors = FALSE
+                 )
+df
+str(df)
+# przechowywanie zmienny jakościowych
+# 1. gender=c(TRUE, TRUE, FALSE) - które jest które?
+# 2. gender=c(1,1,2) - jw - co oznacza 1 a co 2?
+# 3. isMale=c(FALSE, FALSE, TRUE)
+# 4. gender=c("kobieta", "kobieta", "mężczyzna")
+
+# factor - na ratunek
+f <- factor(c("kobieta", "kobieta", "mezczyzna"))
+f
+str(f)
+
+# df[wiersze , kolumny]
+df[1:2, ]
+df[, 2:3]
+df[, c("name", "age", "gender")]
+df[, c("name", "age", "gender", "money")]
+# jeśli wybieramy tylko jedną kolumnę to tak wygodniej:
+df$age
+# średni wiek naszych użytkowników
+mean(df$age)
+
+# wybieram wszystkich pełnoletnich użytkowników
+df$age >= 18 # drugi i trzeci wiersz
+df[df$age >= 18 , ] 
+df[df$age >= 13 & df$gender == "male" , "name"] 
+
+df
+str(df)
+
+?write.csv
+df
+# ustawiam sobie katalog roboczy
+# 2 sposoby określania ścieżki do pliku
+# bezwzględną:
+"C:\Users\Desktop\praca domowa z R\zajecia1\plik.R"
+# względna - względem katalogu roboczego
+# jeśli mój katalog roboczy to:
+"C:\Users\Desktop"
+# to teraz aby dostać się do tego samego pliku wystarczy:
+"praca domowa z R\zajecia1\plik.R"
+
+setwd("~/Dropbox/Programowanie w R - pwds2018zima/")
+write.csv(df, "df-duza.csv")
+# jeśli nie chcemy nazw wierszy
+write.csv2(df, "df2-duza.csv", row.names = FALSE)
+# rozszerzenie nie ma znaczenia
+write.table(df, "table-duza.txt", sep = "\t")
+
+# każdy kolejny element wektora jest zapisywany jako kolejny
+# wiersz w pliku
+writeLines(c("Dziś jest niedziela", "Piękny grudniowy dzień"),
+           "lines-duza.txt")
+
+# cała lista obiektów
+dump(c("df", "f"), "dump-duza.R") 
+# a tutaj tylko jeden konkretny
+dput(c(5, 10, 15), "dput-duza.R")
+dput(df, "dput-df-duza.R")
+
+?save
+save(list="f",file="save.txt")
+x <- load("save.txt")
+
+# zapisujemy binanarnie obiekty z R
+# nieczytelne dla człowieka, ale (zazwyczaj) zajmuje mniej 
+# miejsca niż dump/dput
+df <- rbind(df, df, df)
+con <- file("serialize", open = "w")
+serialize(df, con)
+close(con)
+
+a <- unserialize(file("serialize", open="r"))
+
+
+# {"key":"value"}
+# {"username":"login", "age": 17, "address":{
+#   "home":{"street":"Marszałkowska", "city":"Warszawa"},
+#   "work": {itd...}
+# }}
+
+# Apache Avro
+filter # tutaj jest funkcja z pakietu stats
+require(dplyr) #ładuje pakiet
+filter # tu już jest ta z pakietu dplyr
+
+# zawsze możemy odwołać się do konkretnej funkcji
+# podając wcześniej jej nazwe pakietu
+stats::filter
+dplyr::filter
+
+?datasets
+?mtcars
+mtcars
+
+# nową ramkę, która ma pierwszą kolumnę z nazwą wierszy
+# czyli z nazwami tych samochodów, a dalej wrzucam
+# wszstykie pozostałe kolumny z mtcars
+auta <- tbl_df(data.frame(name=row.names(mtcars), 
+                          mtcars))
+row.names(auta) <- NULL
+
+x <- c(1, 55, 3, 2, 8)
+c("niep", "niep", "niep", "parz", "parz")
+
+wynik <- x
+wynik[x %% 2 == 0] <- "parzysty"
+wynik
+wynik[x %% 2 != 0] <- "nieparzysty"
+wynik
+
+c("parzysty", "nieparzysty")[x%%2+1]
+as.integer(c(TRUE, FALSE))
+auta$am <- factor(c("a", "m")[mtcars$am + 1])
+auta$vs <- factor(c("v", "s")[mtcars$vs + 1])
+
+str(auta)
+auta$mpg
+auta[1:3, 2:3]
+tbl_df
+
+?filter
+auta[auta$hp > 150 & auta$hp < 200, ]
+
+filter(auta, hp > 150 & hp < 200)
+# jeśli uzyjemy , to warunki będą sklejone logicznym i &
+filter(auta, hp > 150, hp < 200)
+filter(auta, hp < 80 | hp > 330)
+
+filter(auta, stri_detect_regex(name,  
+                               stri_paste(c("Merc .*S.*", "Porsche", "Dodge"), 
+                                          collapse="|")))
+
+# microbenchmark
+require(microbenchmark)
+microbenchmark(r=auta[auta$hp > 150 & auta$hp < 200, ], 
+               d=filter(auta, hp > 150 & hp < 200))
+
+auta[3:10, ]
+slice(auta, 3:10)
+slice(auta, n()) # ostatnia obserwacja
+slice(auta, (n()-2):n()) # trzy ostatnie
+
+arrange(auta, am)
+# jeśli są remisy, to podajemy kolejne kolumny do sortowania
+arrange(auta, am, vs, hp, mpg)
+# a jak posortować malejąco?
+arrange(auta, am, desc(hp), desc(mpg))
+
+auta[order(auta$am, auta$hp, auta$mpg, 
+           decreasing = c(FALSE, TRUE, TRUE)), ]
+
+select(auta, name, hp, am)
+# warunki na NAZWY kolumn, a nie na wartości 
+# w tych kolumnach!!! jeśli chcemy po wartościach 
+# to raczej nie kolumny, a wiersze filtrujemy
+select(auta, name, starts_with("c"))
+select(auta, name, contains("ra"))
+# wybieram kolumny od hp do am
+select(auta, name, hp:am)
+# wyrzucam wszystkie od hp do wt
+select(auta, -(hp:wt))
+
+# w bazowym R nie zrobię tego po nazwach
+auta[, 3:6]
+
+# dokładnie tak samo jak na wektorach:
+letters[2:5]
+letters[-(2:20)]
+
+# wybrałem jedną, której zmieniam nazwę, reszta ginie
+select(auta, carname=name)
+
+# jeśli chcemy tylko zmienić, bez gubienia pozostałych 
+# to używamy rename
+rename(auta, carname=name)
+
+# unikatowe wartości
+distinct(auta)
+distinct(auta, am)
+distinct(auta, gear)
+distinct(auta, gear, am)
+distinct(auta, gear, am, vs)
+
+# dodawanie nowych kolumn, zostają stare
+auta <- mutate(auta, lp100km = 235.2/mpg, 
+               l = round(disp * 0.016387064,1),
+               liczbaKol = 4,
+               marka=stri_trim(stri_sub(name,1, stri_locate_first_regex(name," |$")[,1])))
+auta
+
+# pomija kolumny, których nie podaliśmy
+transmute(auta, name, lp100km = 235.2/mpg, 
+       l = round(disp * 0.016387064,1),
+       liczbaKol = 4)
+
+summarise(auta, max(hp), mean(hp), median(lp100km))
+
+# ile jest wierszy
+count(auta)
+
+count(auta, am)
+count(auta, am, gear)
+
+# generowanie losowych danych 
+sample_n(auta, 3)
+sample_frac(auta, 0.1)
+
+# grupowanie
+
+zgrupowane <- group_by(auta, am, gear)
+wynik <- summarise(zgrupowane, max(hp), mean(hp), 
+                   stri_paste(name,collapse=","))
+
+
+slice(arrange(group_by(auta, am, gear), desc(hp)), 1)
+
+slice(
+  arrange(
+    group_by(
+      auta, 
+      am, gear), 
+    desc(hp)), 
+  1)
+
+auta %>% 
+  group_by(am, gear) %>% 
+  arrange(desc(hp)) %>% 
+  slice(1) %>% 
+  write.csv("moje-auta.csv")
+
+# to działa też dla innych funkcji
+1:3 %>% sum()
+2.51 %>% round(1)
+## joiny
+
+
+df1 <- data_frame(x = c(1, 1, 2, 3), y = 1:4*10)
+df2 <- data_frame(x = c(1, 1, 2, 4), z = letters[1:4])
+
+df1
+df2
+colnames(df1)
+colnames(df2)
+inner_join(df1, df2, by=c("x"="x")) # tylko te, które się dopasowały
+left_join(df1, df2) # zostawia wszystkie z lewej, nawet jeśli nie mają pary
+right_join(df1, df2) # analogicznie j/w tylko dla prawego zbioru
+full_join(df1, df2) # zostawia wszystko
+
+# to jest to samo - z dokładnością do kolejnośc wierszy i kolumn
+left_join(df1, df2) == right_join(df2, df1)
+
+?inner_join
+colnames(df1)
+colnames(df2)
+intersect(colnames(df1),colnames(df2))
+
+
+##
+df3 <- data_frame(x1 = c(1, 1, 2, 3), y = 1:4*10)
+df4 <- data_frame(x2 = c(1, 1, 2, 4), z = letters[1:4])
+inner_join(df3, df4)
+inner_join(df3, df4, by=c("x1"="x2")) #sami określamy jak zrobić join
+# nazwany wektor
+jablka <- c(ala=5, jasio = 10)
+jablka
+x <- c("x1" = "x2")
+length(x)
+names(x)
+
+union(df1, df2)
+crossprod(1:2, c(3.14, 2.73))
+
+# iloczyn kartezjański
+merge(df3, df4, all=TRUE)
+
+
+# testy jednostkowe można robić przy użyciu pakietu test_that
+require(stringi)
+
+
+text <- readLines("~/Dropbox/Programowanie w R - pwds2018lato/ml-1m/movies.dat")
+head(text)
+text <- stri_replace_all_fixed(text, "::", "@")
+writeLines(text, "...")
+gsub()
+# albo sed w bashu
+
+
+movies <- read.table("~/Dropbox/Programowanie w R - pwds2018lato/ml-1m/movies.dat", 
+                     sep="@", quote = "", comment.char = "")
+
+colnames(movies) <- c("movieId", "title", "genres")
+
+ratings <- read.table("~/Dropbox/Programowanie w R - pwds2018lato/ml-1m/ratings.dat",
+                      sep=":")[, c(TRUE, FALSE)]
+
+# UserID::MovieID::Rating::Timestamp
+colnames(ratings) <- c("userId", "movieId", "rating", "ts")
+
+# A
+movies %>% count()
+
+# E
+ratings %>% 
+  group_by(movieId) %>%  
+  summarise(rate=mean(rating), count=n()) %>% 
+  filter(count >= 100) %>% 
+  arrange(desc(rate)) %>% 
+  slice(1:100) %>% 
+  inner_join(movies) -> top100
+
+ratings %>% 
+  group_by(movieId) %>%  
+  summarise(rate=mean(rating), count=n()) %>% 
+  select(count) %>% boxplot()
+
+
+
+# nrows - ogranicza liczbę wczytywanych wierszy
+# skip - pozwala pominąć określoną liczbę początkowych wierszy
+
+
+## --- napisy ----
+
+require(stringi)
+godzina <- c(900, 1015, 1200)
+x <- as.character(godzina)
+x
+stri_pad_left(x,4 ,pad="0")
+
